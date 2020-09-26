@@ -1,21 +1,49 @@
-import { StatusBar } from 'expo-status-bar';
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import './App.css';
+import Tmdb from './Tmdb';
+import MovieRow from './components/MovieRow';
+import FeaturedMovie from './components/FeaturedMovie';
+import Header from './components/Header';
 
-export default function App() {
+export default () => {
+
+const [moveList, setMovieList] = useState([]);
+const [featuredData, setFeaturedData] = useState(null);
+
+  useEffect ( () => {
+    const LoadAll = async () => {
+      // pegando a lista total
+      let list = await Tmdb.getHomeList();
+      setMovieList(list);
+
+      //Pegando o Featured (Filme em destaque)
+      let originals = list.filter(i=> i.slug ==='originals');
+      let randomChosen = Math.floor(Math.random() *(originals[0].items.results.length -1));
+      let chosen = originals[0].items.results[randomChosen];
+      let chosenInfo = await Tmdb.getMovieInfo(chosen.id, 'tv');
+      setFeaturedData(chosenInfo);
+    }
+
+    LoadAll();
+  },[]);
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
-}
+    <div className="page">
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+        <Header />
+
+      {
+        featuredData && 
+          <FeaturedMovie item={featuredData} />
+      }
+
+      <section className="lists">
+      {moveList.map((item, key)=> (
+        <MovieRow key={key} title={item.title} items={item.items} />
+      )) }
+      </section>
+    </div>
+
+  );
+
+}
